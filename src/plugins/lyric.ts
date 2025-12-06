@@ -5,6 +5,7 @@ export type Line = Lines[number]
 type PlayHook = (line: number, text: string) => void
 type SetLyricHook = (lines: Lines) => void
 
+
 const lrcTools = {
   isInited: false,
   lrc: null as Lyric | null,
@@ -61,6 +62,19 @@ const lrcTools = {
     this.lrc!.setLyric(this.lyricText, extendedLyrics)
   },
 }
+
+
+// 【新增】暴露歌词行列表和当前索引（供/core/lyric.ts同步）
+export let lyricLines: Lines = [];
+export let currentLyricIndex = 0;
+
+// 【新增】监听歌词更新，同步状态
+lrcTools.addSetLyricHook((lines) => {
+  lyricLines = lines; // 歌词设置时同步行列表
+});
+lrcTools.addPlayHook((line) => {
+  currentLyricIndex = line; // 歌词播放时同步当前索引
+});
 
 
 export const init = async() => {
@@ -134,4 +148,3 @@ export const useLrcSet = () => {
 
   return lines
 }
-
