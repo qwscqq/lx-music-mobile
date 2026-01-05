@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+      - qwscqq-patch-1
   workflow_dispatch:
 jobs:
   Android:
