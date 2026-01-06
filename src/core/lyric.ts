@@ -17,8 +17,6 @@ import {
 } from '@/core/desktopLyric'
 import { getPosition } from '@/plugins/player'
 import playerState from '@/store/player/state'
-// 新增导入
-import { updateMetaData } from '@/plugins/player/playList'
 // import settingState from '@/store/setting/state'
 
 /**
@@ -113,9 +111,6 @@ export const setLyric = async() => {
     if (playerState.musicInfo.tlrc) tlrc = playerState.musicInfo.tlrc
     if (playerState.musicInfo.rlrc) rlrc = playerState.musicInfo.rlrc
     await handleSetLyric(playerState.musicInfo.lrc, tlrc, rlrc)
-    
-    // 新增：更新车载显示
-    void updateMetaData(playerState.musicInfo, playerState.isPlay, playerState.musicInfo.lrc)
   }
 
   if (playerState.isPlay) play()
