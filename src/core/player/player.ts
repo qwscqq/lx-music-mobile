@@ -29,6 +29,9 @@ import { LIST_IDS } from '@/config/constant'
 import { addListMusics, removeListMusics } from '@/core/list'
 import { addDislikeInfo } from '@/core/dislikeList'
 
+// 新增导入
+import { updateMetaData } from '@/plugins/player/playList'
+
 // import { checkMusicFileAvailable } from '@renderer/utils/music'
 
 const createDelayNextTimeout = (delay: number) => {
@@ -184,6 +187,12 @@ const handleRestorePlay = async(restorePlayInfo: LX.Player.SavedPlayInfo) => {
       rawlrc: lyricInfo.rawlrcInfo.lyric,
     })
     global.app_event.lyricUpdated()
+    
+    // 新增：更新车载显示
+    const currentMusicInfo = playerState.musicInfo
+    if (currentMusicInfo.id) {
+      void updateMetaData(currentMusicInfo, playerState.isPlay, lyricInfo.lyric)
+    }
   }).catch((err) => {
     console.log(err)
     if (musicInfo.id != playMusicInfo.musicInfo?.id) return
@@ -216,6 +225,12 @@ const debouncePlay = debounceBackgroundTimer((musicInfo: LX.Player.PlayMusic) =>
       rawlrc: lyricInfo.rawlrcInfo.lyric,
     })
     global.app_event.lyricUpdated()
+    
+    // 新增：更新车载显示
+    const currentMusicInfo = playerState.musicInfo
+    if (currentMusicInfo.id) {
+      void updateMetaData(currentMusicInfo, playerState.isPlay, lyricInfo.lyric)
+    }
   }).catch((err) => {
     console.log(err)
     if (musicInfo.id != playerState.playMusicInfo.musicInfo?.id) return
@@ -431,7 +446,7 @@ export const playNext = async(isAutoToggle = false): Promise<void> => {
       const musicInfo = currentList[playInfo.playerPlayIndex]
       if (musicInfo) currentId = musicInfo.id
     } else {
-      currentId = playMusicInfo.musicInfo.id
+      currentId = playMusicInfo.musicInfo!.id
     }
     // 从已播放列表移除播放列表已删除的歌曲
     let index
@@ -521,7 +536,7 @@ export const playPrev = async(isAutoToggle = false): Promise<void> => {
       const musicInfo = currentList[playInfo.playerPlayIndex]
       if (musicInfo) currentId = musicInfo.id
     } else {
-      currentId = playMusicInfo.musicInfo.id
+      currentId = playMusicInfo.musicInfo!.id
     }
     // 从已播放列表移除播放列表已删除的歌曲
     let index
@@ -599,6 +614,12 @@ export const play = () => {
     return
   }
   void setPlay()
+  
+  // 新增：更新车载显示
+  const currentMusicInfo = playerState.musicInfo
+  if (currentMusicInfo.id) {
+    void updateMetaData(currentMusicInfo, true, currentMusicInfo.lrc ?? undefined)
+  }
 }
 
 /**
@@ -606,6 +627,12 @@ export const play = () => {
  */
 export const pause = async() => {
   await setPause()
+  
+  // 新增：更新车载显示
+  const currentMusicInfo = playerState.musicInfo
+  if (currentMusicInfo.id) {
+    void updateMetaData(currentMusicInfo, false, currentMusicInfo.lrc ?? undefined)
+  }
 }
 
 /**
@@ -663,4 +690,3 @@ export const dislikeMusic = async() => {
   await addDislikeInfo([{ name: minfo.name, singer: minfo.singer }])
   await playNext(true)
 }
-
