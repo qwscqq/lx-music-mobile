@@ -1,8 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
   xmlns:tools="http://schemas.android.com/tools"
   package="cn.toside.music.mobile">
 
-    <!-- 获取读写外置存储权限 -->
+    <!-- 基础权限 -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.INTERNET" />
@@ -10,6 +11,30 @@
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+
+    <!-- 新增：CarWith/Jovincar 多行歌词支持权限 -->
+    
+    <!-- 媒体内容控制权限 - 用于MediaSession和ContentCatcher集成 -->
+    <uses-permission android:name="android.permission.MEDIA_CONTENT_CONTROL" />
+    
+    <!-- 蓝牙权限 - 用于CarWith/Jovincar歌词传输 -->
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+    
+    <!-- 蓝牙连接权限（Android 12+ 需要） -->
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    
+    <!-- 前台服务权限 - 用于歌词服务后台运行 -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    
+    <!-- 唤醒锁定权限 - 防止播放时设备休眠 -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    
+    <!-- 前台服务类型（Android 14+ 需要） -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+    
+    <!-- 音频焦点管理权限 -->
+    <uses-permission android:name="android.permission.AUDIO_FOCUS" />
 
     <application
       android:name=".MainApplication"
@@ -21,22 +46,26 @@
       android:allowBackup="false"
       android:theme="@style/AppTheme"
       tools:targetApi="n">
+      
       <activity
         android:name=".MainActivity"
         android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|screenSize|smallestScreenSize|uiMode"
         android:launchMode="singleTask"
         android:windowSoftInputMode="adjustResize"
         android:exported="true">
+        
         <intent-filter>
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.LAUNCHER" />
         </intent-filter>
+        
         <intent-filter>
           <action android:name="android.intent.action.VIEW" />
           <category android:name="android.intent.category.DEFAULT" />
           <category android:name="android.intent.category.BROWSABLE" />
           <data android:scheme="lxmusic" android:host="*" />
         </intent-filter>
+        
         <intent-filter android:priority="80">
           <action android:name="android.intent.action.VIEW" />
           <category android:name="android.intent.category.DEFAULT"/>
@@ -49,17 +78,18 @@
           <data android:mimeType="application/ogg"/>
           <data android:mimeType="application/x-ogg"/>
         </intent-filter>
+        
         <intent-filter>
           <action android:name="android.intent.action.MAIN" />
           <category android:name="android.intent.category.APP_MUSIC" />
         </intent-filter>
+        
         <intent-filter>
           <action android:name="com.cyanogenmod.eleven.AUDIO_PLAYER"/>
           <category android:name="android.intent.category.DEFAULT"/>
         </intent-filter>
 
         <intent-filter android:priority="80">
-          <!-- <action android:name="android.intent.action.PICK"/> -->
           <action android:name="android.intent.action.VIEW" />
           <category android:name="android.intent.category.DEFAULT"/>
           <category android:name="android.intent.category.OPENABLE"/>
@@ -72,7 +102,6 @@
           <data android:mimeType="text/javascript"/>
           <data android:mimeType="application/x-javascript"/>
           <data android:mimeType="application/javascript"/>
-          <!-- https://stackoverflow.com/a/66402243 -->
           <data android:pathPattern=".*\\.js" />
           <data android:pathPattern=".*\\..*\\.js" />
           <data android:pathPattern=".*\\..*\\..*\\.js" />
@@ -91,15 +120,47 @@
         </intent-filter>
       </activity>
 
+      <!-- 新增：车载歌词服务 -->
+      <service
+        android:name=".car.CarLyricService"
+        android:enabled="true"
+        android:exported="false"
+        android:foregroundServiceType="mediaPlayback">
+        <intent-filter>
+          <action android:name="android.intent.action.MEDIA_BUTTON" />
+          <action android:name="android.media.browse.MediaBrowserService" />
+        </intent-filter>
+      </service>
+
+      <!-- 新增：车载系统广播接收器 -->
+      <receiver
+        android:name=".car.CarSystemReceiver"
+        android:enabled="true"
+        android:exported="true">
+        <intent-filter>
+          <action android:name="com.miui.carwith.MEDIA_LYRIC_UPDATE" />
+          <action android:name="com.vivo.jovincar.LYRIC_DATA" />
+          <action android:name="android.intent.action.MEDIA_BUTTON" />
+          <action android:name="android.media.VOLUME_CHANGED_ACTION" />
+        </intent-filter>
+      </receiver>
+
+      <!-- 新增：媒体播放服务 -->
+      <service
+        android:name=".player.MusicService"
+        android:enabled="true"
+        android:exported="true">
+        <intent-filter>
+          <action android:name="android.media.browse.MediaBrowserService" />
+        </intent-filter>
+      </service>
+
       <!-- Define a FileProvider for API24+ -->
-      <!-- note this is the authority name used by other modules like rn-fetch-blob, easy to have conflicts -->
       <provider
         android:name="androidx.core.content.FileProvider"
         android:authorities="${applicationId}.provider"
         android:exported="false"
         android:grantUriPermissions="true">
-        <!-- you might need the tools:replace thing to workaround rn-fetch-blob or other definitions of provider -->
-        <!-- just make sure if you "replace" here that you include all the paths you are replacing *plus* the cache path we use -->
         <meta-data tools:replace="android:resource"
           android:name="android.support.FILE_PROVIDER_PATHS"
           android:resource="@xml/file_paths" />
